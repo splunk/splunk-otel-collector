@@ -2,11 +2,25 @@ default:
   image: 'docker.repo.splunkdev.net/ci-cd/ci-container:debian-buster'
 
 stages:
+  - sast-scan
   - build
   - sign
   - package
   - release
   - github-release
+
+include:
+  - project: 'prodsec/scp-scanning/gitlab-checkmarx'
+    ref: latest
+    file: '/templates/.sast_scan.yml'
+
+sast-scanner:
+  stage: sast-scan
+  extends: .sast_scan
+  variables:
+    SAST_SCANNER: "Semgrep"
+    SEMGREP_EXCLUDE: "deployments,internal/buildscripts,tests,*.sh,*.yaml,*.yml,*.conf"
+    alert_mode: "policy"
 
 .go-cache:
   image: 'docker.repo.splunkdev.net/ci-cd/ci-container:golang-1.16'
